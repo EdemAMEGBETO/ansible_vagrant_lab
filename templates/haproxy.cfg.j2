@@ -1,0 +1,43 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    daemon
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000ms
+    timeout client  50000ms
+    timeout server  50000ms
+
+#--------------------------------------------------------------------
+# Frontend HTTP → expose le serveur web Nginx
+#--------------------------------------------------------------------
+frontend http_front
+    bind *:80
+    default_backend web_back
+
+#--------------------------------------------------------------------
+# Backend Nginx (web)
+#--------------------------------------------------------------------
+backend web_back
+    balance roundrobin
+    server web 192.168.56.10:80 check
+
+#--------------------------------------------------------------------
+# Frontend MySQL/MariaDB → expose la base de données
+#--------------------------------------------------------------------
+frontend mysql_front
+    bind *:3306
+    mode tcp
+    option tcplog
+    default_backend db_back
+
+#--------------------------------------------------------------------
+# Backend MariaDB (db)
+#--------------------------------------------------------------------
+backend db_back
+    mode tcp
+    balance roundrobin
+    server db 192.168.56.11:3306 check
